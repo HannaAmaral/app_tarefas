@@ -1,89 +1,66 @@
 import 'package:flutter/material.dart';
-
-class ListaTarefasPage extends StatelessWidget {
-  const ListaTarefasPage({super.key});
-
+ 
+class ListaTarefa extends StatelessWidget {
+  ListaTarefa({super.key});
+ 
+  final List<Map<String, dynamic>> tarefas = [
+   
+      {'titulo': 'Configuração do ambiente', 'situacao': true},
+      {'titulo': 'Fazer compras', 'situacao': false},
+      {'titulo': 'Estudar Inglês', 'situacao': false},
+      {'titulo': 'Pagar a Fatura', 'situacao': true},
+      {'titulo': 'Fazer Compras', 'situacao': true},
+      {'titulo': 'Sair as 22h00', 'situacao':false},
+ 
+  ];
+ 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Minhas Tarefas"),
+        title: Text("Minhas tarefas"),
         centerTitle: true,
       ),
-      body: ListView(
+      body: ListView.builder(
         padding: EdgeInsets.all(12),
-        children: [
-          Card(
+        itemCount: tarefas.length,
+        itemBuilder: (context, index) {
+ 
+          final tarefa = tarefas[index];
+          final bool situacao = tarefa['situacao'];
+ 
+          return Card(
             margin: EdgeInsets.symmetric(vertical: 6),
             child: ListTile(
-              leading: Icon(Icons.check_circle,
-               color: Colors.green,
-               ),
-               title: Text('Configurar o Ambiente de Desenvolvimento', style: TextStyle(
-                decoration: TextDecoration.lineThrough
-                   ),
-                 ),
-                 subtitle: Text('Concluida'),
-                 trailing: Icon(
-                  Icons.delete_outline,
-                  color: Colors.grey,
-                 ),
-               ),
+              leading: Icon(
+                situacao ? Icons.check_circle : Icons.circle_outlined,
+                color: situacao ? Colors.green : Colors.redAccent,
+              ),
+              title: Text(
+                tarefa['titulo'],
+                style: TextStyle(
+                  decoration: situacao ? TextDecoration.lineThrough : TextDecoration.none,
+                ),
+              ),
+              subtitle: situacao ? Text('Concluida') : Text('Pendente'),
+              trailing: Icon(
+                Icons.delete_outline,
+                color: Colors.grey,
+              ),
             ),
-                      Card(
-            margin: EdgeInsets.symmetric(vertical: 6),
-            child: ListTile(
-              leading: Icon(Icons.circle_outlined,
-               color: Colors.grey,
-               ),
-               title: Text('Criar projeto em Flutter', 
-                 ),
-                 subtitle: Text('Pendente'),
-                 trailing: Icon(
-                  Icons.delete_outline,
-                  color: Colors.grey,
-                 ),
-               ),
-            ),
-                                  Card(
-            margin: EdgeInsets.symmetric(vertical: 6),
-            child: ListTile(
-              leading: Icon(Icons.add_circle_outline,
-               color: Colors.blue,
-               ),
-               title: Text('Fix Bugs', 
-                 ),
-                 subtitle: Text('A iniciar'),
-                 trailing: Icon(
-                  Icons.delete_outline,
-                  color: Colors.grey,
-                 ),
-               ),
-            ),
-              
-                      Card(
-            margin: EdgeInsets.symmetric(vertical: 6),
-            child: ListTile(
-              leading: Icon(Icons.check_circle,
-               color: Colors.red,
-               ),
-               title: Text('75% Completo até sexta-feira', style: TextStyle(
-                decoration: TextDecoration.lineThrough
-                   ),
-                 ),
-                 subtitle: Text('Falhou'),
-                 trailing: Icon(
-                  Icons.delete_outline,
-                  color: Colors.grey,
-                 ),
-               ),
-            ),
-        ],
+          );
+ 
+        }
+ 
+ 
+       
       ),
+ 
       floatingActionButton: FloatingActionButton(onPressed: () {},
-      //shape: CircleBorder(),   //deixa redondo
-      child: Icon(Icons.add),
+        shape: CircleBorder(),  //deixa o botão redondo
+        child: Icon(Icons.add),
       ),
     );
   }
 }
+ 

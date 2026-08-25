@@ -12,7 +12,7 @@ void main(){
         foregroundColor: Colors.white,
       ),
     ),   
-    home: ListaTarefasPage(),
+    home: ListaTarefa(),
   ),
   );
 }
