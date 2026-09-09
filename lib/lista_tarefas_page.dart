@@ -1,19 +1,92 @@
+import 'dart:ffi';
+
+import 'package:app_tarefas/databaseHelper.dart';
+import 'package:app_tarefas/sobre_aplicativo_page.dart';
 import 'package:flutter/material.dart';
- 
-class ListaTarefa extends StatelessWidget {
+
+class ListaTarefa extends StatefulWidget {
   ListaTarefa({super.key});
- 
-  final List<Map<String, dynamic>> tarefas = [
-   
-      {'titulo': 'Configuração do ambiente', 'situacao': true},
-      {'titulo': 'Fazer compras', 'situacao': false},
-      {'titulo': 'Estudar Inglês', 'situacao': false},
-      {'titulo': 'Pagar a Fatura', 'situacao': true},
-      {'titulo': 'Fazer Compras', 'situacao': true},
-      {'titulo': 'Sair as 22h00', 'situacao':false},
- 
-  ];
- 
+
+  @override
+  State<ListaTarefa> createState() => _ListaTarefaState();
+}
+
+class _ListaTarefaState extends State<ListaTarefa> {
+  List<Map<String, dynamic>> tarefas = [];
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  void carregarTarefas() async {
+    final dados = await Databasehelper.buscarTarefa();
+    setState(() {
+      tarefas = dados;
+    });
+  }
+
+  //Marcar tarefa como concluida/Pendente
+
+  void marcarSituacao(int index) async {
+    final tarefa = tarefas[index];
+    //  final novaSituacao = tarefa['situacao'] == 1 ? 0 : 1;
+
+    await Databasehelper.atualizarSituacao(
+      tarefa['id'],
+      tarefa['situacao'] == 1,
+    );
+
+    carregarTarefas();
+  }
+
+  //Remover tarefa
+  Future<void> removerTarefa(int index) async {
+    final tarefa = tarefas[index];
+
+    await Databasehelper.removerSituacao(
+      tarefa['id'],
+    );
+
+    carregarTarefas();
+  }
+
+  //Adicionar Tarefa
+  void adicionarTarefa() {
+    final adicinarController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Nova Tarefa'),
+          content: TextField(
+            controller: adicinarController,
+            decoration: InputDecoration(hintText: 'Digite sua Tarefa'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () async {
+                if (adicinarController.text.isNotEmpty) {
+                  await Databasehelper.inserirTarefa(adicinarController.text);
+                  carregarTarefas();
+
+                  // ignore: use_build_context_synchronously
+                  Navigator.pop(context);
+                }
+              },
+              child: Text('Adicionar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -21,46 +94,91 @@ class ListaTarefa extends StatelessWidget {
         title: Text("Minhas tarefas"),
         centerTitle: true,
       ),
-      body: ListView.builder(
-        padding: EdgeInsets.all(12),
-        itemCount: tarefas.length,
-        itemBuilder: (context, index) {
- 
-          final tarefa = tarefas[index];
-          final bool situacao = tarefa['situacao'];
- 
-          return Card(
-            margin: EdgeInsets.symmetric(vertical: 6),
-            child: ListTile(
-              leading: Icon(
-                situacao ? Icons.check_circle : Icons.circle_outlined,
-                color: situacao ? Colors.green : Colors.redAccent,
-              ),
-              title: Text(
-                tarefa['titulo'],
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(color: Colors.indigo),
+              child: Text(
+                "Minhas Tarefas",
                 style: TextStyle(
-                  decoration: situacao ? TextDecoration.lineThrough : TextDecoration.none,
+                  color: Colors.white,
+                  fontSize: 22,
                 ),
               ),
-              subtitle: situacao ? Text('Concluida') : Text('Pendente'),
-              trailing: Icon(
-                Icons.delete_outline,
-                color: Colors.grey,
-              ),
             ),
-          );
- 
-        }
- 
- 
-       
+            ListTile(
+              leading: Icon(Icons.list),
+              title: Text("Todas as Tarefas"),
+              onTap: () {},
+            ),
+            ListTile(
+              leading: Icon(Icons.info_outline),
+              title: Text("Sobre o Aplicativo"),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => SobrePage(),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
       ),
- 
-      floatingActionButton: FloatingActionButton(onPressed: () {},
-        shape: CircleBorder(),  //deixa o botão redondo
+      body: tarefas.isEmpty
+          ? Center(
+              child: Text(
+                'Nenhuma Tarefa ainda toque em + para adicionar',
+                style: TextStyle(fontSize: 20, color: Colors.grey),
+              ),
+            )
+          : ListView.builder(
+              padding: EdgeInsets.all(12),
+              itemCount: tarefas.length,
+              itemBuilder: (context, index) {
+                final tarefa = tarefas[index];
+                final bool situacao = tarefa['situacao'] == 1;
+
+                return Card(
+                  margin: EdgeInsets.symmetric(vertical: 6),
+                  child: ListTile(
+                    leading: GestureDetector(
+                      onTap: () => marcarSituacao(index),
+                      child: Icon(
+                        situacao ? Icons.check_circle : Icons.circle_outlined,
+                        color: situacao ? Colors.green : Colors.redAccent,
+                      ),
+                    ),
+                    title: Text(
+                      tarefa['titulo'],
+                      style: TextStyle(
+                        decoration: situacao
+                            ? TextDecoration.lineThrough
+                            : TextDecoration.none,
+                      ),
+                    ),
+                    subtitle: situacao ? Text('Concluida') : Text('Pendente'),
+                    trailing: GestureDetector(
+                      onTap: () => removerTarefa(index),
+                      child: Icon(
+                        Icons.delete_outline,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+
+      floatingActionButton: FloatingActionButton(
+        onPressed: adicionarTarefa,
+        shape: CircleBorder(), //deixa o botão redondo
         child: Icon(Icons.add),
       ),
     );
   }
 }
- 
